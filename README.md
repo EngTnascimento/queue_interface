@@ -16,4 +16,6 @@ A Python library to abstract the behavior of message queues, supporting both Rab
 
 ## Install
 
-- pip install git+https://github.com/EngTnascimento/queue_interface@main
+```sh
+pip install git+https://github.com/EngTnascimento/queue_interface@main
+```
