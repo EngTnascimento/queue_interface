@@ -16,6 +16,7 @@ setup(
         "pydantic==2.7.4",
         "pydantic-settings==2.3.4",
     ],
+    include_package_data=True,
     classifiers=[
         "Programming Language :: Python :: 3",
         "Operating System :: OS Independent",
