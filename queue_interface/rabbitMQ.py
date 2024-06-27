@@ -1,5 +1,6 @@
 from typing import Callable, Generator, Type
 
+import pika as pk
 from pydantic import BaseModel, ValidationError
 
 from .queue import Queue
@@ -7,13 +8,21 @@ from .queue_setup import RabbitMQSetup
 
 
 class RabbitMQ(Queue):
-    def __init__(self, queue, MessageModel: Type[BaseModel], exchange="") -> None:
+    def __init__(
+        self, queue: str, consumer: bool, MessageModel: Type[BaseModel], exchange=""
+    ) -> None:
         setup = RabbitMQSetup()
         super().__init__(setup)
         self.queue = queue
         self.MessageModel = MessageModel
         self.exchange = exchange
-        self.setup.channel.queue_declare(queue=self.queue)
+        self.consumer = consumer
+
+        try:
+            self.setup.channel.queue_declare(queue=self.queue, passive=consumer)
+        except pk.exceptions.ChannelClosedByBroker as e:  # pyright: ignore
+            print(f"Queue {self.queue} does not exists!: {e}")
+            self.setup.connection.close()
 
     def send(self, message: BaseModel):
         try:
@@ -28,11 +37,17 @@ class RabbitMQ(Queue):
         )
 
     def receive(self) -> Generator:
+        if not self.consumer:
+            raise ValueError("Not consumer instance cannot consume.")
+
         for method_frame, _, body in self.setup.channel.consume(self.queue):
             self.setup.channel.basic_ack(method_frame.delivery_tag)
             yield self.MessageModel.model_validate_json(body)
 
     def consume(self, process_message: Callable):
+        if not self.consumer:
+            raise ValueError("Not consumer instance cannot consume.")
+
         def callback(ch, method, properties, body):
             message = self.MessageModel.model_validate_json(body)
             process_message(message)
@@ -50,3 +65,7 @@ class RabbitMQ(Queue):
 
     def close(self):
         self.setup.connection.close()
+
+    def __del__(self):
+        if self.setup and self.setup.connection.is_open:
+            self.setup.connection.close()
