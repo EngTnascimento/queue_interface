@@ -1,5 +1,4 @@
-import base64
-import subprocess
+import os
 
 import pika as pk
 from pydantic import Field
@@ -28,27 +27,11 @@ class RabbitMQSetup:
     @staticmethod
     def get_secret() -> str:
         try:
-            # Define the kubectl command
-            command = [
-                "kubectl",
-                "get",
-                "secret",
-                "--namespace",
-                "default",
-                "rabbitmq",
-                "-o",
-                "jsonpath={.data.rabbitmq-password}",
-            ]
-
-            # Run the command and capture the output
-            result = subprocess.check_output(command).strip()
-
-            # Decode the base64 output
-            password = base64.b64decode(result).decode("utf-8")
+            password = os.environ["RABBITMQ_PASSWORD"]
 
             return password
-        except subprocess.CalledProcessError as e:
-            raise e
+        except KeyError:
+            raise KeyError("Environment variable 'RABBITMQ_PASSWORD' is missing.")
 
 
 QueueSetup = RabbitMQSetup
