@@ -13,8 +13,8 @@ class RabbitMQConfig(BaseSettings):
 
 
 class RabbitMQSetup:
-    def __init__(self):
-        self.config = RabbitMQConfig()
+    def __init__(self, config: RabbitMQConfig):
+        self.config = config
         self.credentials = pk.PlainCredentials(
             self.config.username, self.config.password
         )
@@ -28,7 +28,6 @@ class RabbitMQSetup:
     def get_secret() -> str:
         try:
             password = os.environ["RABBITMQ_PASSWORD"]
-
             return password
         except KeyError:
             raise KeyError("Environment variable 'RABBITMQ_PASSWORD' is missing.")

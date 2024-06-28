@@ -1,8 +1,10 @@
 import threading
 
 import pytest
+from pika.exceptions import AMQPConnectionError
 from pydantic import BaseModel
 
+from queue_interface.queue_setup import RabbitMQConfig
 from queue_interface.rabbitMQ import RabbitMQ
 
 
@@ -70,6 +72,18 @@ def test_queue_behaviour():
     stop_event.wait()
     bad_consumer_thread.join()
     consumer_thread.join()
+
+
+def test_custom_config():
+    custom_config = RabbitMQConfig(host="172.17.0.1")
+    assert custom_config.host == "172.17.0.1"
+    with pytest.raises(AMQPConnectionError):
+        queue = RabbitMQ(
+            queue="test",
+            consumer=False,
+            MessageModel=HelloMessage,
+            config=custom_config,
+        )
 
 
 if __name__ == "__main__":

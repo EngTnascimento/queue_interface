@@ -4,14 +4,19 @@ import pika as pk
 from pydantic import BaseModel, ValidationError
 
 from .queue import Queue
-from .queue_setup import RabbitMQSetup
+from .queue_setup import RabbitMQConfig, RabbitMQSetup
 
 
 class RabbitMQ(Queue):
     def __init__(
-        self, queue: str, consumer: bool, MessageModel: Type[BaseModel], exchange=""
+        self,
+        queue: str,
+        consumer: bool,
+        MessageModel: Type[BaseModel],
+        config: RabbitMQConfig = RabbitMQConfig(),
+        exchange="",
     ) -> None:
-        setup = RabbitMQSetup()
+        setup = RabbitMQSetup(config)
         super().__init__(setup)
         self.queue = queue
         self.MessageModel = MessageModel
